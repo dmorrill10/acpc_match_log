@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <vector>
 #include <functional>
@@ -87,7 +88,7 @@ public:
     std::ifstream stream;
     stream.open(name_, std::ifstream::in);
     if (!stream.is_open()) {
-      throw invalid_argument("Unable to open log file \"" + name_ + "\"");
+      throw std::invalid_argument("Unable to open log file \"" + name_ + "\"");
     }
 
     doFn(stream);
@@ -137,12 +138,12 @@ public:
   LogFileSet(std::vector<std::string>&& filePaths):logFiles_(filePaths) {}
 
   void processLogsInParallel(
-      std::function<void(const LogFile&, std::ifstream&)> doOnLogFn
+      std::function<void(std::ifstream&)> doOnLogFn
   ) {
     std::vector<std::thread> threads;
     for (auto& log : logFiles_) {
       threads.emplace_back([&log, &doOnLogFn]() {
-        log.open(doOnLogFn);
+        LogFile(log).open(doOnLogFn);
       });
     }
     for (auto& t : threads) { t.join(); }
