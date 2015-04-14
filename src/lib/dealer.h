@@ -7,7 +7,7 @@ Copyright (C) 2011 by the Computer Poker Research Group, University of Alberta
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <unistd.h>
-#include "game.h"
+#include <game.h>
 
 
 /* the ports for players to connect to will be printed on standard out

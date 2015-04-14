@@ -16,10 +16,10 @@
 #include <random>
 
 extern "C" {
-#include <game.h>
+#include <lib/dealer.h>
 #include <print_debugger.h>
 
-#include <dealer.h>
+#include <game.h>
 #include <stdlib.h>
 #include <stdio.h>
 #define __STDC_LIMIT_MACROS
@@ -124,12 +124,13 @@ Integral sum(const Integral *src, ArraySize srcArraySize) {
 }
 
 template <class ArraySize>
-int32_t potSize(const MatchState &view, ArraySize numPlayers) {
-  return potSize(view.state, numPlayers);
-}
-template <class ArraySize>
 int32_t potSize(const State &state, ArraySize numPlayers) {
   return sum(state.spent, numPlayers);
+}
+
+template <class ArraySize>
+int32_t potSize(const MatchState &view, ArraySize numPlayers) {
+  return potSize(view.state, numPlayers);
 }
 
 bool actionsEqual(const Action &a1, const Action &a2) {

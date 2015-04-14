@@ -31,13 +31,13 @@ public:
                                   const GameDef &gameDef)
       : viewer_(view.viewingPlayer), state_(view.state), gameDef_(gameDef){};
   explicit EncapsulatedMatchState(const State &state, const GameDef &gameDef,
-                                  int viewer = -1)
+                                  int viewer = OUTSIDE_OBSERVER_VIEWER)
       : viewer_(viewer), state_(state), gameDef_(gameDef){};
   explicit EncapsulatedMatchState(State &&state, const GameDef &gameDef,
-                                  int viewer = -1)
+                                  int viewer = OUTSIDE_OBSERVER_VIEWER)
       : viewer_(viewer), state_(state), gameDef_(gameDef){};
   explicit EncapsulatedMatchState(const std::string &resultLogStateLine,
-                                  const GameDef &gameDef, int viewer = -1)
+                                  const GameDef &gameDef, int viewer = OUTSIDE_OBSERVER_VIEWER)
       : viewer_(viewer), state_(newState(resultLogStateLine, gameDef)),
         gameDef_(gameDef){};
   virtual ~EncapsulatedMatchState(){};
