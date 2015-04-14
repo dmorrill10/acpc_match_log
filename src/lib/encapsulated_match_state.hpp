@@ -42,6 +42,8 @@ public:
         gameDef_(gameDef){};
   virtual ~EncapsulatedMatchState(){};
 
+  const State& state() const { return state_; }
+
   int32_t potSize() const {
     return Acpc::potSize(state_, gameDef_.game_->numPlayers);
   }
