@@ -15,6 +15,8 @@ extern "C" {
 #include <game.h>
 }
 
+#include <lib/encapsulated_match_state.hpp>
+
 namespace AcpcMatchLog {
 namespace Utils {
 #define DELETE_POINTER(ptr)                                                    \
@@ -78,79 +80,90 @@ Integral sum(const Integral *src, ArraySize srcArraySize) {
     return count + numBc;
   }, Integral(0));
 }
-};
 
-class LogFile {
+class File {
 public:
-  LogFile(const std::string &name) : name_(name) {}
+  File(const std::string &name) : name_(name) {}
+  virtual ~File(){};
 
-  void open(std::function<void(std::ifstream &)> doFn) const {
+  virtual void
+  open(std::function<void(const File &f, std::ifstream &stream)> doFn) const {
     std::ifstream stream;
     stream.open(name_, std::ifstream::in);
     if (!stream.is_open()) {
       throw std::invalid_argument("Unable to open log file \"" + name_ + "\"");
     }
 
-    doFn(stream);
+    doFn((*this), stream);
 
     stream.close();
   }
-
-//  [this](const LogFile& /*log*/, ifstream& logStream, ofstream& featuresStream, ofstream& actionsStream) {
-//          assert(logStream.is_open());
-//          assert(featuresStream.is_open());
-//
-//          string line;
-//          std::getline(logStream, line);
-//
-//          vector<string> parts;
-//          boost::split(parts, line, boost::is_any_of(" "));
-//   assert(parts.size() > 3);
-//
-//  path gameDefPath = BIN_DIR / "../vendor/game_defs" / path(parts[3]).leaf();
-//  GameDef gameDef(gameDefPath.string());
-//
-//  while (logStream.good()) {
-//    std::getline(logStream, line);
-//
-//    if (regex_match(line, COMMENT_PATTERN)) { continue; }
-//
-//    const Hand hand(line, gameDef);
-//
-//    for (auto& player : playerNames_) {
-//      if (hand.playerParticipated(player)) {
-//        hand.replay(player, [&featuresStream, &actionsStream](const StateWithHistory& sWithHistory) {
-//          featuresStream << sWithHistory.featuresToTextRow() << endl;
-//          actionsStream << sWithHistory.currentState().action_ << endl;
-//          return false;
-//        });
-//      }
-//    }
-
   const std::string &name() const { return name_; }
 
-private:
+protected:
   const std::string name_;
+};
+}
+
+class LogFile : public Utils::File {
+public:
+  LogFile(const std::string &name, const Acpc::GameDef &gameDef)
+      : Utils::File(name), gameDef_(gameDef) {}
+  virtual ~LogFile(){};
+
+  virtual void eachState(const std::function<
+      bool(const Acpc::EncapsulatedMatchState &ms,
+           const std::vector<std::string> playerNames)> &doFn) {
+    open([&doFn, this](const File & /*f*/, std::ifstream &stream) {
+      std::string line;
+      while (stream.good()) {
+        std::getline(stream, line);
+        try {
+          Acpc::EncapsulatedMatchState ms(line, gameDef_);
+          std::vector<std::string> playerNames = players(line, gameDef_);
+          if (doFn(ms, playerNames)) {
+            break;
+          };
+        } catch (const std::runtime_error &e) {
+          // Ignore comments
+        }
+      }
+    });
+  }
+
+protected:
+  const Acpc::GameDef &gameDef_;
 };
 
 class LogFileSet {
 public:
-  LogFileSet(std::vector<std::string>&& filePaths):logFiles_(filePaths) {}
+  LogFileSet(std::vector<std::string> &&filePaths, const Acpc::GameDef &gameDef)
+      : filePaths_(filePaths), gameDef_(gameDef) {}
+  virtual ~LogFileSet() {}
 
-  void processLogsInParallel(
-      std::function<void(std::ifstream&)> doOnLogFn
-  ) {
+  virtual void processFilesInParallel(const std::function<
+      bool(const Acpc::EncapsulatedMatchState &ms,
+           const std::vector<std::string> playerNames)> &doFn) {
     std::vector<std::thread> threads;
-    for (auto& log : logFiles_) {
-      threads.emplace_back([&log, &doOnLogFn]() {
-        LogFile(log).open(doOnLogFn);
-      });
+    for (auto &f : filePaths_) {
+      threads.emplace_back(
+          [&f, &doFn, this]() { LogFile(f, gameDef_).eachState(doFn); });
     }
-    for (auto& t : threads) { t.join(); }
+    for (auto &t : threads) {
+      t.join();
+    }
   }
-private:
-  const std::vector<std::string>& logFiles_;
+
+  virtual void processFiles(const std::function<
+      bool(const Acpc::EncapsulatedMatchState &ms,
+           const std::vector<std::string> playerNames)> &doFn) {
+    for (auto &f : filePaths_) {
+      LogFile(f, gameDef_).eachState(doFn);
+    }
+  }
+
+protected:
+  const std::vector<std::string> &filePaths_;
+  const Acpc::GameDef &gameDef_;
 };
-
 }
-

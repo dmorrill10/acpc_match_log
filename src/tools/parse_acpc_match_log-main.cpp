@@ -3,7 +3,4 @@
 
 #include <lib/acpc_match_log.hpp>
 
-int main(int argc, char **argv)
-{
-}
-
+int main(int argc, char **argv) {}

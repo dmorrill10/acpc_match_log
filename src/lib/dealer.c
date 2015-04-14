@@ -415,7 +415,7 @@ static int logTransaction( const Game *game, const State *state,
   }
   c += r;
 
-  if( fwrite( line, 1, c, file ) != c ) {
+  if( (int)fwrite( line, 1, c, file ) != c ) {
 
     fprintf( stderr, "ERROR: could not write to transaction file\n" );
     return -1;

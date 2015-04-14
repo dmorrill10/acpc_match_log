@@ -152,10 +152,9 @@ $(TARGETS):
 	@chmod 755 $@
 
 
-modernize: $(CPP_SRC) $(CPP_HEADERS) | $(BIN_DIR)
-	@if [ ! -d $(@D) ]; then mkdir -p $(@D); fi
-	@echo [modernize] $^
-	@clang-modernize -for-compilers=clang-3.7 -summary -format -include $^
+format: $(CPP_SRC) $(CPP_HEADERS) | $(BIN_DIR)
+	@echo [format] $^
+	@clang-format $^ -i
 
 # Versions
 #---------
@@ -240,7 +239,6 @@ $(T)%$(TEST_EXTENSION): $(TEST_DIR)/$(TEST_PREFIX)%$(TEST_SRC_EXTENSION) $(LIB_O
 		$(INCLUDES) $(LDLIBS) $(LIB_OBJ)
 
 .PHONY: test
-#test: cleantest
 test: OPT =-O1
 test: CFLAGS +=$(OPT) $(WARNINGS)
 test: CPPFLAGS +=$(OPT) $(WARNINGS)
