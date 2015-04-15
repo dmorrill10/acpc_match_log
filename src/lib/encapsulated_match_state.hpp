@@ -44,6 +44,10 @@ public:
 
   const State& state() const { return state_; }
 
+  virtual size_t rotationIndex() const {
+    return handNum() % gameDef().game_->numPlayers;
+  }
+
   int32_t potSize() const {
     return Acpc::potSize(state_, gameDef_.game_->numPlayers);
   }

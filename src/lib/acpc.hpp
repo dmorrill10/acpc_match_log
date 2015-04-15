@@ -137,18 +137,21 @@ bool actionsEqual(const Action &a1, const Action &a2) {
   return a1.size == a2.size && a1.type == a2.type;
 }
 
-Game *gameDef(const std::string &game_def_file_name) {
+Game *gameDef(const std::string &gameDefFileName) {
   /* get the game definition */
-  FILE *file = fopen(game_def_file_name.c_str(), "r");
+  char fileName[gameDefFileName.size()+1];
+  memset(fileName, 0, sizeof(fileName));
+  strcpy(fileName, gameDefFileName.c_str());
+  FILE *file = fopen(fileName, "r");
   if (!file) {
     throw std::runtime_error(std::string("Could not open game definition ") +
-                             game_def_file_name + "\n");
+                             gameDefFileName + "\n");
   }
   Game *game = readGame(file);
   if (!game) {
     fclose(file);
     throw std::runtime_error(std::string("Could not read game ") +
-                             game_def_file_name + "\n");
+                             gameDefFileName + "\n");
   }
   fclose(file);
 

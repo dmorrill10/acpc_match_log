@@ -137,7 +137,7 @@ protected:
 
 class LogFileSet {
 public:
-  LogFileSet(std::vector<std::string> &&filePaths, const Acpc::GameDef &gameDef)
+  LogFileSet(const std::vector<std::string> &filePaths, const Acpc::GameDef &gameDef)
       : filePaths_(filePaths), gameDef_(gameDef) {}
   virtual ~LogFileSet() {}
 
