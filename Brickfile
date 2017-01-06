@@ -1,0 +1,14 @@
+-
+  name: project_acpc_server
+  version: 41
+  location:
+    method: svn
+    url: http://www.computerpokercompetition.org/repos/project_acpc_server/trunk/
+-
+  name: Catch
+  version: 1.2.1-dmorrill10
+  location: git@github.com:dmorrill10/Catch.git
+-
+  name: cpp_utilities
+  version: 0.0.1
+  location: git@github.com:dmorrill10/cpp_utilities.git

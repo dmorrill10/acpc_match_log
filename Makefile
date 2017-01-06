@@ -25,14 +25,11 @@ OPT =-O3 -ffast-math -ftree-vectorize
 WARNINGS =-Wall -Wextra -Wredundant-decls
 
 ### C
-CC =gcc -std=gnu99
-CFLAGS = -fPIC -march=native
+CFLAGS :=-std=gnu99 -fPIC -march=native
 
 ### C++
-CPPFLAGS := $(CFLAGS)
+CPPFLAGS :=-std=c++14 -fPIC -march=native
 #CLANG_OPTIONS = -fsanitize=memory -fno-optimize-sibling-calls -fno-omit-frame-pointer -fsanitize-memory-track-origins=2
-CPP =clang++-3.5 -std=c++14 $(CLANG_OPTIONS)
-
 
 # Linking options
 #----------------
@@ -132,6 +129,10 @@ INCLUDES +=$(SRC_INCLUDES)
 # Base rules
 #-----------
 
+.PHONY: all
+all: $(LIB_OBJ)
+
+
 #### Dealer
 DEALER_SRC :=$(SRC_DIR)/lib/dealer.c
 DEALER_OBJ :=$(OBJ_DIR)/lib-dealer.o
@@ -141,14 +142,14 @@ $(DEALER_OBJ): $(DEALER_SRC) | $(OBJ_DIR)
 $(MAIN_OBJ): $(CPP_SRC) $(CPP_HEADERS) $(C_SRC) $(C_HEADERS) | $(BIN_DIR)
 	@if [ ! -d $(@D) ]; then mkdir -p $(@D); fi
 	@echo [CPP] $<
-	@$(CPP) $(CPPFLAGS) $(TO_OBJ) $< $(TO_FILE) $@ $(INCLUDES)
+	@$(CXX) $(CPPFLAGS) $(TO_OBJ) $< $(TO_FILE) $@ $(INCLUDES)
 
 $(foreach $(OBJ_DIR),$(MAIN_OBJ),$(eval $(call TO_TARGET,$($(OBJ_DIR))): $($(OBJ_DIR))))
 $(TARGETS): $(LIB_OBJ) $(MAIN_OBJ)
 $(TARGETS):
 	@if [ ! -d $(@D) ]; then mkdir -p $(@D); fi
 	@echo [LD] $@
-	@$(CPP) $(CPPFLAGS) $(LDFLAGS) $(TO_FILE) $@ $^ $(LDLIBS)
+	@$(CXX) $(CPPFLAGS) $(LDFLAGS) $(TO_FILE) $@ $^ $(LDLIBS)
 	@chmod 755 $@
 
 
@@ -186,7 +187,7 @@ clean:
 .PHONY: cleandep
 cleandep:
 	-rm -f $(DEP)
-	
+
 
 # Debugging
 #----------
@@ -199,7 +200,7 @@ print-%:
 
 # Definitions
 #------------
-CATCH_DIR :=$(VENDOR_DIR)/catch
+CATCH_DIR :=$(VENDOR_DIR)/Catch/include
 TEST_DIR :=$(abspath $(THIS_DIR)/test)
 TEST_SUPPORT_DIR :=$(TEST_DIR)/support
 INCLUDES +=-I$(CATCH_DIR) -I$(TEST_SUPPORT_DIR)
@@ -211,7 +212,6 @@ TEST_SUBDIRS :=$(filter-out $(TEST_SUPPORT_DIR) $(TEST_DIR)/data,$(wildcard $(TE
 TESTS        :=$(shell find $(TEST_SUBDIRS) -type f -name '$(TEST_PREFIX)*$(TEST_SRC_EXTENSION)' 2>/dev/null)
 TEST_EXES_TEMP   :=$(TESTS:%$(TEST_SRC_EXTENSION)=%$(TEST_EXTENSION))
 TEST_EXES :=$(abspath $(TEST_EXES_TEMP:$(TEST_DIR)%=$(TEST_EXECUTABLE_DIR)%))
-TEST_SUPPORT_SRC :=$(TEST_SUPPORT_DIR)/test_helper.cpp
 
 
 # Rules
@@ -224,19 +224,15 @@ $(TEST_SUPPORT_DIR):
 	@echo [mkdir] $@
 	@mkdir -p $@
 
-$(TEST_SUPPORT_SRC): | $(TEST_SUPPORT_DIR)
-	@echo [touch] $@
-	@touch $@
-
 T = $(abspath $(TEST_EXECUTABLE_DIR))/$(TEST_PREFIX)
-$(T)%$(TEST_EXTENSION): $(TEST_DIR)/$(TEST_PREFIX)%$(TEST_SRC_EXTENSION) $(LIB_OBJ) $(TEST_SUPPORT_SRC) | $(TEST_EXECUTABLE_DIR)
+$(T)%$(TEST_EXTENSION): $(TEST_DIR)/$(TEST_PREFIX)%$(TEST_SRC_EXTENSION) $(LIB_OBJ) | $(TEST_EXECUTABLE_DIR)
 	@if [ ! -d $(@D) ]; then mkdir -p $(@D); fi
 	@echo [CCLD] $<
-	@$(CPP) $(CPPFLAGS) $(LDFLAGS) \
-		$(TEST_SUPPORT_SRC) \
+	@$(CXX) $(CPPFLAGS) $(LDFLAGS) \
 		$< \
 		-o $@ \
 		$(INCLUDES) $(LDLIBS) $(LIB_OBJ)
+	chmod a+x $@
 
 .PHONY: test
 test: OPT =-O1
@@ -245,7 +241,7 @@ test: CPPFLAGS +=$(OPT) $(WARNINGS)
 test: $(TEST_EXES)
 	@for test in $^; do echo ; echo [TEST] $$test; \
 		echo "===============================================================\n";\
-		$$test | grep -v -P '^\s*\#'; done
+		$$test | egrep -v '^\s*\#'; done
 
 .PHONY: cleantest
 cleantest:

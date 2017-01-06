@@ -17,7 +17,7 @@
 
 extern "C" {
 #include <lib/dealer.h>
-#include <print_debugger.h>
+#include <cpp_utilities/src/lib/print_debugger.h>
 
 #include <game.h>
 #include <stdlib.h>
@@ -324,6 +324,13 @@ void replay(const MatchState &view, const GameDef &gameDef,
   }
   return;
 }
+
+#ifdef HOST_NAME_MAX
+#elif defined (_POSIX_HOST_NAME_MAX)
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
+#else
+#define HOST_NAME_MAX sysconf(_SC_HOST_NAME_MAX);
+#endif
 
 struct DealerConnection {
   DealerConnection(uint16_t port, const std::string &host = "localhost")
